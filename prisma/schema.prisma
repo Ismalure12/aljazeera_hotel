@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         String    @default("user")
+  resetCode    String?   @map("reset_code")
+  resetCodeExp DateTime? @map("reset_code_exp")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String
+  slug      String     @unique
+  kicker    String?
+  headline  String?
+  sub       String?
+  coverUrl  String?    @map("cover_url")
+  period    String     @default("any") // any | morning | midday | evening
+  sortOrder Int        @default(0) @map("sort_order")
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at")
+  items     MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id           Int           @id @default(autoincrement())
+  categoryId   Int           @map("category_id")
+  name         String
+  description  String?
+  price        Decimal       @db.Decimal(10, 2)
+  imageUrl     String?       @map("image_url")
+  kcal         String?
+  prepTime     String?       @map("prep_time")
+  pairing      String?
+  sortOrder    Int           @default(0) @map("sort_order")
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  optionGroups OptionGroup[]
+  extras       ItemExtra[]
+  tags         ItemTag[]
+
+  @@map("menu_items")
+}
+
+model OptionGroup {
+  id         Int          @id @default(autoincrement())
+  menuItemId Int          @map("menu_item_id")
+  title      String
+  sortOrder  Int          @default(0) @map("sort_order")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  menuItem   MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options    ItemOption[]
+
+  @@map("option_groups")
+}
+
+model ItemOption {
+  id            Int         @id @default(autoincrement())
+  optionGroupId Int         @map("option_group_id")
+  name          String
+  priceAdd      Decimal     @default(0) @map("price_add") @db.Decimal(10, 2)
+  sortOrder     Int         @default(0) @map("sort_order")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  optionGroup   OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+
+  @@map("item_options")
+}
+
+model ItemExtra {
+  id         Int      @id @default(autoincrement())
+  menuItemId Int      @map("menu_item_id")
+  name       String
+  priceAdd   Decimal  @default(0) @map("price_add") @db.Decimal(10, 2)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("item_extras")
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  slug      String    @unique
+  label     String
+  variant   String    @default("default") // default | green | spicy
+  createdAt DateTime  @default(now()) @map("created_at")
+  items     ItemTag[]
+
+  @@map("tags")
+}
+
+model ItemTag {
+  menuItemId Int      @map("menu_item_id")
+  tagId      Int      @map("tag_id")
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, tagId])
+  @@map("item_tags")
+}
+
+model Banner {
+  id              Int      @id @default(autoincrement())
+  service         String   @unique // morning | midday | evening
+  tagLabel        String   @map("tag_label")
+  headline        String
+  body            String
+  imageUrl        String?  @map("image_url")
+  ctaText         String   @map("cta_text")
+  ctaCategorySlug String?  @map("cta_category_slug")
+  meta1Label      String?  @map("meta1_label")
+  meta1Value      String?  @map("meta1_value")
+  meta2Label      String?  @map("meta2_label")
+  meta2Value      String?  @map("meta2_value")
+  meta3Label      String?  @map("meta3_label")
+  meta3Value      String?  @map("meta3_value")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+model SocialLink {
+  id        Int      @id @default(autoincrement())
+  platform  String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("social_links")
+}
